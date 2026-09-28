@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Event-Driven E-Commerce | Serverless AWS Architecture</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220%22><text y=%2226%22 font-size=%2228%22>⚡</text></svg>">
+</head>
+<body>
+
+  <!-- Navigation Header -->
+  <header>
+    <div class="nav-container">
+      <a href="#" class="brand" onclick="switchTab('store'); return false;">
+        <span>⚡ EventCommerce</span>
+        <span class="brand-badge">AWS Serverless</span>
+      </a>
+
+      <nav class="nav-tabs">
+        <button class="nav-btn active" data-tab="store" onclick="switchTab('store')">🛍️ Storefront</button>
+        <button class="nav-btn" data-tab="visualizer" onclick="switchTab('visualizer')">📊 Architecture Visualizer</button>
+        <button class="nav-btn" data-tab="tracker" onclick="switchTab('tracker')">🔍 Order Tracker</button>
+      </nav>
+
+      <div class="nav-actions">
+        <div id="mode-badge" class="mode-badge">
+          <span>🟢</span> Local Simulation
+        </div>
+        <button id="btn-cart" class="cart-btn">
+          <span>🛒 Cart</span>
+          <span id="cart-count" class="cart-count">0</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Area -->
+  <main>
+
+    <!-- Tab 1: Storefront -->
+    <section id="tab-store" class="tab-content active">
+      <div class="hero-banner">
+        <div class="hero-text">
+          <h1>Event-Driven Cloud Store</h1>
+          <p>
+            Experience asynchronous serverless order processing. Every checkout publishes domain events across Amazon EventBridge, Amazon SQS, and AWS Lambda.
+          </p>
+        </div>
+
+        <div class="api-config-box">
+          <label for="api-url-input">AWS API Gateway URL (Optional)</label>
+          <div class="api-input-group">
+            <input 
+              type="text" 
+              id="api-url-input" 
+              class="api-input" 
+              placeholder="Leave empty for local simulation" 
+            />
+            <button id="btn-save-api" class="btn-secondary">Connect</button>
+          </div>
+        </div>
+      </div>
+
+      <h2 style="font-size: 1.4rem; font-weight: 700; margin-bottom: 1.5rem;">Featured Developer Swag & Gear</h2>
+      <div id="products-grid" class="products-grid">
+        <!-- Dynamically rendered by app.js -->
+      </div>
+    </section>
+
+    <!-- Tab 2: Architecture Visualizer & Live Telemetry -->
+    <section id="tab-visualizer" class="tab-content">
+      <div class="visualizer-container">
+        <div class="visualizer-header">
+          <div>
+            <h2>Real-Time Event Choreography Visualizer</h2>
+            <p style="color: var(--text-secondary); font-size: 0.9rem;">
+              Watch domain events flow asynchronously across AWS serverless services.
+            </p>
+          </div>
+
+          <div class="simulation-controls">
+            <span style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted);">CHAOS TESTING:</span>
+            <label class="toggle-label">
+              <input type="checkbox" id="payment-fail-toggle" />
+              <span>Simulate Payment Failure (Trigger 3x SQS Retries & DLQ)</span>
+            </label>
+            <label class="toggle-label">
+              <input type="checkbox" id="notif-fail-toggle" />
+              <span>Simulate Notification Failure</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Flow Canvas -->
+        <div class="flow-diagram">
+          <!-- Row 1: Ingress & Core Order Service -->
+          <div class="flow-row">
+            <div id="node-api_gateway" class="flow-node">
+              <div class="node-icon">🌐</div>
+              <div class="node-title">API Gateway (v2)</div>
+              <div class="node-desc">HTTP Ingress: POST /orders</div>
+              <div class="node-status">IDLE</div>
+            </div>
+
+            <div style="color: var(--accent-cyan); font-size: 1.5rem;">➔</div>
+
+            <div id="node-order_lambda" class="flow-node">
+              <div class="node-icon">⚡</div>
+              <div class="node-title">Order Lambda</div>
+              <div class="node-desc">Validation & Total Calculation</div>
+              <div class="node-status">IDLE</div>
+            </div>
+
+            <div style="color: var(--accent-cyan); font-size: 1.5rem;">➔</div>
+
+            <div id="node-dynamodb" class="flow-node">
+              <div class="node-icon">🗄️</div>
+              <div class="node-title">DynamoDB</div>
+              <div class="node-desc">Stores Order (Status: PENDING)</div>
+              <div class="node-status">IDLE</div>
+            </div>
+          </div>
+
+          <!-- Connecting Event Stream Line -->
+          <div style="text-align: center; color: var(--accent-purple); font-size: 1.5rem;">⬇️ PutEvents (ecommerce.orders / OrderCreated)</div>
+
+          <!-- Row 2: Central Event Bus -->
+          <div class="flow-row">
+            <div id="node-eventbridge" class="flow-node" style="min-width: 480px; border-color: rgba(139, 92, 246, 0.4);">
+              <div class="node-icon">🔀</div>
+              <div class="node-title">Amazon EventBridge (Custom Bus)</div>
+              <div class="node-desc">Declarative Fan-Out Pattern Matcher</div>
+              <div class="node-status">IDLE</div>
+            </div>
+          </div>
+
+          <!-- Connecting Fan-out Lines -->
+          <div style="display: flex; justify-content: space-around; color: var(--accent-purple); font-size: 1.2rem; padding: 0 4rem;">
+            <span>↙️ Rule: Payment</span>
+            <span>⬇️ Rule: Notification</span>
+            <span>↘️ Rule: Analytics</span>
+          </div>
+
+          <!-- Row 3: Asynchronous Queues & Direct Target -->
+          <div class="flow-row">
+            <div id="node-payment_sqs" class="flow-node">
+              <div class="node-icon">📬</div>
+              <div class="node-title">Payment SQS</div>
+              <div class="node-desc">Buffer & Rate Leveling</div>
+              <div class="node-status">IDLE</div>
+            </div>
+
+            <div id="node-notif_sqs" class="flow-node">
+              <div class="node-icon">📬</div>
+              <div class="node-title">Notification SQS</div>
+              <div class="node-desc">Decoupled Email Queue</div>
+              <div class="node-status">IDLE</div>
+            </div>
+
+            <div id="node-analytics_lambda" class="flow-node">
+              <div class="node-icon">📊</div>
+              <div class="node-title">Analytics Lambda</div>
+              <div class="node-desc">Direct Real-Time Telemetry</div>
+              <div class="node-status">IDLE</div>
+            </div>
+          </div>
+
+          <!-- Row 4: Worker Lambdas -->
+          <div class="flow-row">
+            <div id="node-payment_lambda" class="flow-node">
+              <div class="node-icon">💳</div>
+              <div class="node-title">Payment Lambda</div>
+              <div class="node-desc">Async Payment Processor</div>
+              <div class="node-status">IDLE</div>
+            </div>
+
+            <div id="node-notif_lambda" class="flow-node">
+              <div class="node-icon">✉️</div>
+              <div class="node-title">Notification Lambda</div>
+              <div class="node-desc">Customer Confirmation Dispatch</div>
+              <div class="node-status">IDLE</div>
+            </div>
+          </div>
+
+          <!-- Row 5: Dead Letter Queues (DLQs) -->
+          <div class="flow-row">
+            <div id="node-payment_dlq" class="flow-node" style="border-style: dashed;">
+              <div class="node-icon">☠️</div>
+              <div class="node-title">Payment DLQ</div>
+              <div class="node-desc">3x Retries Exhausted Redrive Target</div>
+              <div class="node-status">NO POISON PILLS</div>
+            </div>
+
+            <div id="node-notif_dlq" class="flow-node" style="border-style: dashed;">
+              <div class="node-icon">☠️</div>
+              <div class="node-title">Notification DLQ</div>
+              <div class="node-desc">Failed Email Quarantine</div>
+              <div class="node-status">NO POISON PILLS</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Terminal Logs -->
+        <div class="terminal-box" style="margin-top: 2rem;">
+          <div class="terminal-header">
+            <div class="terminal-dots">
+              <span class="dot red"></span>
+              <span class="dot yellow"></span>
+              <span class="dot green"></span>
+            </div>
+            <span style="color: var(--text-secondary); font-size: 0.8rem; font-weight: 600;">LIVE EVENT STREAM LOG</span>
+            <button id="btn-clear-logs" style="background: transparent; border: none; color: var(--text-muted); cursor: pointer; font-size: 0.75rem;">Clear Console</button>
+          </div>
+          <div id="terminal-logs" class="terminal-content">
+            <div class="log-entry">
+              <span class="log-time">[Ready]</span> 
+              <span class="log-src">[System]</span> 
+              <span class="log-msg">Event visualizer initialized. Place an order from the Storefront or Cart to trigger the event flow.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tab 3: Order Tracker -->
+    <section id="tab-tracker" class="tab-content">
+      <div class="tracker-box">
+        <h2 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem;">Track Order Status</h2>
+        <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
+          Lookup your order to verify eventual consistency and payment status.
+        </p>
+
+        <div class="tracker-search">
+          <input 
+            type="text" 
+            id="tracker-input" 
+            class="tracker-input" 
+            placeholder="e.g. order-f47ac10b-58cc-4372-a567-0e02b2c3d479" 
+          />
+          <button id="btn-track" class="btn-checkout" style="width: auto; padding: 0.75rem 1.5rem;">
+            Lookup Order
+          </button>
+        </div>
+
+        <div id="tracker-result" class="order-detail-card">
+          <!-- Rendered by app.js -->
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Cart Drawer Overlay -->
+  <div id="cart-drawer-overlay" class="cart-drawer-overlay">
+    <div class="cart-drawer">
+      <div class="cart-header">
+        <h3>Shopping Cart</h3>
+        <button id="btn-close-cart" class="btn-close">&times;</button>
+      </div>
+
+      <div id="cart-items-list" class="cart-items">
+        <!-- Rendered by app.js -->
+      </div>
+
+      <div class="cart-footer">
+        <div class="cart-summary-row">
+          <span>Subtotal</span>
+          <span id="cart-subtotal">LKR 0</span>
+        </div>
+        <div class="cart-summary-row total">
+          <span>Estimated Total</span>
+          <span>Calculated at Checkout</span>
+        </div>
+        <button id="btn-checkout" class="btn-checkout">
+          Place Order & Watch Event Flow ➔
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/api.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

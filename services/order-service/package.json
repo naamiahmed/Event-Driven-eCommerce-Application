@@ -1,0 +1,17 @@
+{
+  "name": "@ecommerce/order-service",
+  "version": "1.0.0",
+  "description": "Order Service Lambda responsible for order ingestion, validation, persistence in DynamoDB, and publishing OrderCreated events to EventBridge",
+  "main": "src/handler.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.750.0",
+    "@aws-sdk/client-eventbridge": "^3.750.0",
+    "@aws-sdk/lib-dynamodb": "^3.750.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  }
+}

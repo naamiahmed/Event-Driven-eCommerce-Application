@@ -1,0 +1,96 @@
+name: CD Infrastructure Deployment
+
+on:
+  workflow_dispatch:
+    inputs:
+      terraform_action:
+        description: 'Terraform action to execute'
+        required: true
+        default: 'plan'
+        type: choice
+        options:
+          - plan
+          - apply
+      environment:
+        description: 'Target AWS environment'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
+
+permissions:
+  id-token: write # Required for AWS OIDC authentication
+  contents: read
+
+jobs:
+  test-and-package:
+    name: Run Test Suite
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci || npm install
+
+      - name: Run Tests
+        run: npm test
+
+  deploy:
+    name: Terraform Provisioning
+    needs: [test-and-package]
+    runs-on: ubuntu-latest
+    env:
+      AWS_REGION: ${{ secrets.AWS_REGION || 'us-east-1' }}
+      TF_VAR_environment: ${{ github.event.inputs.environment || 'dev' }}
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Check AWS Credentials Configuration
+        id: check_credentials
+        run: |
+          if [ -z "${{ secrets.AWS_ROLE_TO_ASSUME }}" ] && [ -z "${{ secrets.AWS_ACCESS_KEY_ID }}" ]; then
+            echo "AWS credentials / IAM Role not configured yet in GitHub Secrets."
+            echo "Deployment safely bypassed. Please add AWS_ROLE_TO_ASSUME or AWS_ACCESS_KEY_ID to enable automated deployment."
+            echo "configured=false" >> $GITHUB_OUTPUT
+          else
+            echo "configured=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Setup Terraform
+        if: steps.check_credentials.outputs.configured == 'true'
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.5.7
+
+      - name: Configure AWS Credentials (OIDC or Keys)
+        if: steps.check_credentials.outputs.configured == 'true'
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Terraform Init
+        if: steps.check_credentials.outputs.configured == 'true'
+        run: terraform -chdir=infrastructure/terraform init
+
+      - name: Terraform Plan
+        if: steps.check_credentials.outputs.configured == 'true'
+        run: terraform -chdir=infrastructure/terraform plan -no-color
+
+      - name: Terraform Apply
+        if: steps.check_credentials.outputs.configured == 'true' && github.event.inputs.terraform_action == 'apply'
+        run: terraform -chdir=infrastructure/terraform apply -auto-approve -no-color

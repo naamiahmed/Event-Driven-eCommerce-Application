@@ -1,0 +1,13 @@
+{
+  "name": "@ecommerce/analytics-service",
+  "version": "1.0.0",
+  "description": "Analytics Service Lambda directly invoked by EventBridge rules to demonstrate fan-out telemetry and event ingestion",
+  "main": "src/handler.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "jest": "^29.7.0"
+  }
+}

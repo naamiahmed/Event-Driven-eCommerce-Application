@@ -1,0 +1,35 @@
+{
+  "name": "aws-event-driven-ecommerce",
+  "version": "1.0.0",
+  "description": "Production-ready, serverless event-driven e-commerce platform on AWS using EventBridge, SQS, DynamoDB, Lambda, and Terraform",
+  "private": true,
+  "workspaces": [
+    "services/*"
+  ],
+  "scripts": {
+    "test": "jest --runInBand",
+    "test:coverage": "jest --coverage --runInBand",
+    "simulate": "node scripts/local-simulate.js",
+    "frontend": "node scripts/serve-frontend.js",
+    "lint": "node scripts/lint.js"
+  },
+  "devDependencies": {
+    "@aws-sdk/client-dynamodb": "^3.750.0",
+    "@aws-sdk/client-eventbridge": "^3.750.0",
+    "@aws-sdk/lib-dynamodb": "^3.750.0",
+    "jest": "^29.7.0"
+  },
+  "keywords": [
+    "aws",
+    "serverless",
+    "event-driven",
+    "eventbridge",
+    "sqs",
+    "dynamodb",
+    "lambda",
+    "terraform",
+    "devops"
+  ],
+  "author": "Naami Ahmed",
+  "license": "MIT"
+}

@@ -1,0 +1,13 @@
+{
+  "name": "@ecommerce/notification-service",
+  "version": "1.0.0",
+  "description": "Notification Service Lambda that consumes OrderCreated events asynchronously from SQS, simulates customer notifications, and demonstrates retry/DLQ behaviors",
+  "main": "src/handler.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "jest": "^29.7.0"
+  }
+}

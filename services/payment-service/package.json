@@ -1,0 +1,13 @@
+{
+  "name": "@ecommerce/payment-service",
+  "version": "1.0.0",
+  "description": "Payment Service Lambda that consumes OrderCreated events asynchronously from SQS, simulates payment processing, and demonstrates retry/DLQ behaviors",
+  "main": "src/handler.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "jest": "^29.7.0"
+  }
+}
